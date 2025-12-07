@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from fastapi.security import OAuth2PasswordBearer
 import redis.asyncio as redis
+from passlib.context import CryptContext
 
 
 class Settings(BaseSettings):
@@ -13,6 +15,10 @@ class Settings(BaseSettings):
     REDIS_PORT: int
     REDIS_PASS: str
     NUM_OF_LAST_FIELDS: int = 5
+    SECRET_KEY: str
+    ALGORITHM: str
+    REFRESH_TOKEN_EXPIRE_DAYS = 7
+    ACCESS_TOKEN_EXPIRE_HOURS = 12
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
@@ -36,6 +42,12 @@ class Settings(BaseSettings):
             db=1,
             decode_responses=True,
         )
+
+    def get_pwd(self):
+        return CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+    def get_oauth2_scheme(self):
+        return OAuth2PasswordBearer(tokenUrl="token")
 
 
 settings = Settings()

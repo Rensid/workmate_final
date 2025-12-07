@@ -1,11 +1,15 @@
 from fastapi import Depends, HTTPException, status
-from app.auth.jwt import get_new_tokens, verify_access_token, verify_password, verify_refresh_token
-from app.crud.user_crud import check_user_by_id, check_user_by_username
-from app.base.base import main_db
-from app.schemas.user_schema import TokenData
-from settings import oauth2_scheme
+from access.auth.jwt_gen import (
+    get_new_tokens,
+    verify_access_token,
+    verify_password,
+    verify_refresh_token,
+)
+from access.views import get_user_by_id, check_user_by_username
+from access.base import get_async_session
+from access.schemas.user_schema import TokenData
 from sqlalchemy.ext.asyncio import AsyncSession
-from config import SECRET_KEY
+from config import settings
 
 import jwt
 from jwt.exceptions import InvalidTokenError
@@ -20,8 +24,10 @@ async def authenticate_user(session: AsyncSession, username: str, password: str)
     return user
 
 
-async def get_current_user(session: AsyncSession = Depends(main_db.get_async_session),
-                           token: str = Depends(oauth2_scheme)):
+async def get_current_user(
+    session: AsyncSession = Depends(get_async_session),
+    token: str = Depends(settings.get_oauth2_scheme),
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -29,9 +35,9 @@ async def get_current_user(session: AsyncSession = Depends(main_db.get_async_ses
     )
     try:
         # дешифровка токена и получение его типа и зашифрованного id
-        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         user_id: str = payload.get("sub")
-        type: str = payload.get('type')
+        type: str = payload.get("type")
         if user_id is None or type is None:
             raise credentials_exception
         token_data = TokenData(id=user_id)
