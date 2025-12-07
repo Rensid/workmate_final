@@ -1,0 +1,43 @@
+services:
+  cache:
+    image: redis:alpine
+    command: "redis-server --requirepass z1SJm3mUVU"
+    environment:
+      - REDIS_HOST=cache
+      - REDIS_PORT=6379
+    restart: always
+
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: z1SJm3mUVU
+      POSTGRES_DB: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_HOST: db
+    volumes:
+      - db_data:/var/lib/postgresql
+    ports:
+      - "55533:5432"
+    restart: always
+  app:
+    build:
+      context: .
+    depends_on:
+      - db
+      - cache
+    environment:
+      DEBUG: "False"
+      REDIS_HOST: cache
+      REDIS_PASSWORD: z1SJm3mUVU
+      SECURITY_IS_ENABLED: "False"
+      DATABASE: postgresql+asyncpg://postgres:z1SJm3mUVU@db:5432/postgres
+      SYNC_DATABASE: postgresql://postgres:z1SJm3mUVU@db:5432/postgres
+    ports:
+    - "8000:8000"
+    volumes:
+    - ./:/app/
+    restart: always
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+volumes:
+  db_data:
