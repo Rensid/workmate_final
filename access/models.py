@@ -59,11 +59,10 @@ class UserRole(Base):
 
     id: Mapped[ids]
 
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    user_id: Mapped[int] = mapped_column()
     role_id: Mapped[int] = mapped_column(ForeignKey("role.id"))
 
     role: Mapped["Role"] = relationship("Role", back_populates="user_association")
-    user: Mapped["User"] = relationship("User", back_populates="role_association")
 
 
 class Resource(Base):

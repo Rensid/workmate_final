@@ -17,7 +17,6 @@ services:
       POSTGRES_HOST: db
     volumes:
       - db_data:/var/lib/postgresql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "55533:5432"
     restart: always
